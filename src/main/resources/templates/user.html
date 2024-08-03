@@ -11,7 +11,9 @@
 <div class="container">
     <h1>User</h1>
     <div>
-        Logged in as: <span th:text="${name}"></span>
+        <p><strong>Name:</strong> <span th:text="${name}"></span></p>
+        <p><strong>Login:</strong> <span th:text="${login}"></span></p>
+        <p><strong>ID:</strong> <span th:text="${id}"></span></p>
     </div>
     <div>
         <a href="/logout">Logout</a> <!-- Ссылка на выход -->

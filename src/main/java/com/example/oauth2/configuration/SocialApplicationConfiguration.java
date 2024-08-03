@@ -1,10 +1,16 @@
 package com.example.oauth2.configuration;
 
+import com.example.oauth2.repository.UserRepository;
+import com.example.oauth2.service.SocialAppService;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -12,7 +18,12 @@ import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuc
 
 @Configuration
 @EnableWebSecurity
+@AllArgsConstructor
 public class SocialApplicationConfiguration {
+
+    private final SocialAppService socialAppService;
+
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -27,6 +38,8 @@ public class SocialApplicationConfiguration {
                 )
                 .oauth2Login(oauth2Login -> oauth2Login
                         .loginPage("/") // Указываем страницу для входа
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint
+                                .userService(socialAppService))
                         .defaultSuccessUrl("/user")
                 )
                 .logout(logout -> logout
@@ -39,9 +52,10 @@ public class SocialApplicationConfiguration {
     }
 
     private LogoutSuccessHandler oidcLogoutSuccessHandler() {
-        SimpleUrlLogoutSuccessHandler successHandler = new SimpleUrlLogoutSuccessHandler();
-        successHandler.setDefaultTargetUrl("/");
-        return successHandler;
+        var oidClientInitiatedServerLogoutSuccessHandler =
+                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        oidClientInitiatedServerLogoutSuccessHandler.setPostLogoutRedirectUri("/");
+        return oidClientInitiatedServerLogoutSuccessHandler;
     }
 
 }
